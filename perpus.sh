@@ -28,6 +28,22 @@ addBook() {
 
   echo "Enter the book id: ";
   read id;
+
+  # check existing book id  
+  local found=0
+  while IFS=, read -r book_id title author stock publisher
+  do
+    if [ "$book_id" == "$id" ]; then
+      found=1
+      break;
+    fi
+  done < <(tail -n +2 books.csv)
+  
+  if [ $found -eq 1 ]; then
+    echo "Book with ID: $id already exist";
+    return;
+  fi
+
   echo "Enter the book title: ";
   read title;
   echo "Enter the book author: ";
@@ -38,7 +54,6 @@ addBook() {
   read publisher;
 
   # write to the book.csv
-
   echo
   echo "ID: $id";
   echo "Title: $title";
@@ -53,25 +68,70 @@ addBook() {
 }
 
 editBook() {
-  echo "Edit Book";
+  local id="";
+  echo "Enter the book id want to edit: ";
+  read id;
+
+  local found=0;
+  local index=2;
+
+  # edit from the books.csv
+   while IFS=, read -r book_id title author stock publisher
+  do
+    if [ "$book_id" = "$id" ]; then
+      echo ""
+      echo "Book ID: $book_id";
+      echo "Title: $title";
+      echo "Author: $author";
+      echo "Stock: $stock";
+      echo "Publisher: $publisher";
+      echo "";
+
+      # delete the book from the books.csv
+      sed -i "${index}d" books.csv;
+      found=1;
+      break;
+    fi
+    index=$(expr $index + 1);
+  done < <(tail -n +2 books.csv)
+
+  if [ $found -eq 0 ]; then
+    echo "Book not found!";
+    return;
+  fi
+
+  echo "Enter the new title: ";
+  read title;
+  echo "Enter the new author: ";
+  read author;
+  echo "Enter the new stock: ";
+  read stock;
+  echo "Enter the new publisher: ";
+  read publisher;
+
+  # write to the books.csv
+  echo ""
+  echo "$id,$title,$author,$stock,$publisher" >> books.csv;
+
 }
 
 deleteBook() {
   local id="";
-  echo "Delete Book";
-  echo "Enter the book id: ";
+  echo "Enter the book id want to delete: ";
   read id;
 
   local found=0;
+  local index=2
 
   # remove from the books.csv
   while IFS=, read -r book_id title author stock publisher
   do
     if [ "$book_id" = "$id" ]; then
-      sed -i "${LINENO}d" books.csv;
+      sed -i "${index}d" books.csv;
       found=1;
       echo "Book deleted!";
     fi
+    index=$(expr $index + 1);
   done < <(tail -n +2 books.csv)
 
   if [ $found -eq 0 ]; then
@@ -81,7 +141,7 @@ deleteBook() {
 
 showBook() {
   local id="";
-  echo "Enter the book id: ";
+  echo "Enter the book id want to show: ";
   read id;
 
   local found=0;
